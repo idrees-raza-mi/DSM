@@ -1,0 +1,15 @@
+{
+  "name": "driver-deployment-monorepo",
+  "private": true,
+  "version": "0.1.0",
+  "workspaces": [
+    "backend",
+    "driver-mobile-app",
+    "admin-web-dashboard"
+  ],
+  "scripts": {
+    "dev:backend": "npm --workspace backend run dev",
+    "dev:driver": "npm --workspace driver-mobile-app run start",
+    "dev:admin": "npm --workspace admin-web-dashboard run dev"
+  }
+}
