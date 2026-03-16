@@ -5,7 +5,8 @@ import { getMeApi } from '../services/driver.api';
 type DriverProfile = {
   id: string;
   status: string;
-  onboardingStep: string;
+  onboardingStep: number;
+  currentScore?: number;
 };
 
 type AuthState = {
@@ -65,12 +66,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const login = async (emailOrPhone: string, password: string) => {
     dispatch({ type: 'LOGIN_START' });
     const res = await loginApi(emailOrPhone, password);
+    const d = res.data.data;
     dispatch({
       type: 'LOGIN_SUCCESS',
       payload: {
-        token: res.data.data.token,
-        user: res.data.data.user,
-        driverProfile: res.data.data.driverProfile,
+        token: d.token,
+        user: d.user,
+        driverProfile: d.driverProfile || {
+          id: d.user.id,
+          status: d.user.status,
+          onboardingStep: d.user.onboardingStep,
+          currentScore: d.user.currentScore,
+        },
       },
     });
   };
@@ -78,12 +85,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const register = async (name: string, phone: string, email: string, password: string) => {
     dispatch({ type: 'LOGIN_START' });
     const res = await registerApi(name, phone, email, password);
+    const d = res.data.data;
     dispatch({
       type: 'LOGIN_SUCCESS',
       payload: {
-        token: res.data.data.token,
-        user: res.data.data.user,
-        driverProfile: res.data.data.driverProfile,
+        token: d.token,
+        user: d.user,
+        driverProfile: d.driverProfile || {
+          id: d.user.id,
+          status: d.user.status,
+          onboardingStep: d.user.onboardingStep,
+          currentScore: d.user.currentScore,
+        },
       },
     });
   };
@@ -95,9 +108,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       dispatch({
         type: 'UPDATE_DRIVER_PROFILE',
         payload: {
-          id: res.data.data._id,
+          id: res.data.data.id || res.data.data._id,
           status: res.data.data.status,
           onboardingStep: res.data.data.onboardingStep,
+          currentScore: res.data.data.currentScore,
         },
       });
     }

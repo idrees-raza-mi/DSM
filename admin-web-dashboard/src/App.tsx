@@ -5,6 +5,8 @@ import LoginPage from './pages/LoginPage';
 import DriverApprovalPage from './pages/DriverApprovalPage';
 import DriverListPage from './pages/DriverListPage';
 import DeploymentManagementPage from './pages/DeploymentManagementPage';
+import BillingPage from './pages/BillingPage';
+import AnalyticsPage from './pages/AnalyticsPage';
 import SidebarLayout from './components/layout/SidebarLayout';
 
 const ProtectedRoutes = () => {
@@ -17,10 +19,12 @@ const ProtectedRoutes = () => {
   return (
     <SidebarLayout>
       <Routes>
+        <Route path="/analytics" element={<AnalyticsPage />} />
         <Route path="/drivers/pending" element={<DriverApprovalPage />} />
         <Route path="/drivers" element={<DriverListPage />} />
         <Route path="/deployments" element={<DeploymentManagementPage />} />
-        <Route path="*" element={<Navigate to="/drivers/pending" replace />} />
+        <Route path="/billing" element={<BillingPage />} />
+        <Route path="*" element={<Navigate to="/analytics" replace />} />
       </Routes>
     </SidebarLayout>
   );

@@ -3,25 +3,25 @@
   flex-direction: column;
   gap: 16px;
 }
-
 .page-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
-
 .page-title {
   font-size: 22px;
   font-weight: 700;
 }
-
 .page-subtitle {
   font-size: 14px;
   color: #6b7280;
 }
-
+.header-actions {
+  display: flex;
+  gap: 8px;
+}
 .btn-primary {
-  border-radius: 999px;
+  border-radius: 8px;
   border: none;
   padding: 8px 14px;
   background-color: #111827;
@@ -30,7 +30,87 @@
   font-weight: 600;
   cursor: pointer;
 }
-
+.btn-secondary {
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  padding: 8px 14px;
+  background-color: #fff;
+  color: #374151;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.create-form {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 20px;
+}
+.create-form h3 {
+  margin: 0 0 12px;
+  font-size: 16px;
+  font-weight: 600;
+}
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.form-grid input,
+.form-grid select {
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 14px;
+}
+.filters-bar {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.filter-input {
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 14px;
+}
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid #e5e7eb;
+}
+.data-table th {
+  background: #f9fafb;
+  text-align: left;
+  padding: 10px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.data-table td {
+  padding: 10px 14px;
+  font-size: 14px;
+  border-top: 1px solid #f3f4f6;
+}
+.data-table tr:hover td {
+  background: #f9fafb;
+}
+.badge {
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.badge-green { background: #d1fae5; color: #065f46; }
+.badge-yellow { background: #fef3c7; color: #92400e; }
+.badge-red { background: #fee2e2; color: #991b1b; }
 .placeholder-card {
   background-color: #ffffff;
   border-radius: 12px;
@@ -39,4 +119,3 @@
   font-size: 14px;
   color: #6b7280;
 }
-
