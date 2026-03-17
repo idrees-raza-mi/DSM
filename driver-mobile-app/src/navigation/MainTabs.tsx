@@ -1,5 +1,6 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { Ionicons } from '@expo/vector-icons';
 import DriverDashboardScreen from '../screens/DriverDashboardScreen';
 import AvailableDeploymentsScreen from '../screens/AvailableDeploymentsScreen';
 import DriverScoreScreen from '../screens/DriverScoreScreen';
@@ -16,17 +17,49 @@ export type MainTabParamList = {
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
+type IoniconsName = React.ComponentProps<typeof Ionicons>['name'];
+
+const TAB_ICONS: Record<string, { active: IoniconsName; inactive: IoniconsName }> = {
+  Dashboard:   { active: 'grid',        inactive: 'grid-outline' },
+  Deployments: { active: 'car',         inactive: 'car-outline' },
+  Score:       { active: 'star',        inactive: 'star-outline' },
+  Earnings:    { active: 'wallet',      inactive: 'wallet-outline' },
+  Profile:     { active: 'person',      inactive: 'person-outline' },
+};
+
 const MainTabs = () => {
   return (
-    <Tab.Navigator screenOptions={{ headerShown: false }}>
-      <Tab.Screen name="Dashboard" component={DriverDashboardScreen} />
+    <Tab.Navigator
+      screenOptions={({ route }) => ({
+        headerShown: false,
+        tabBarActiveTintColor: '#111827',
+        tabBarInactiveTintColor: '#9ca3af',
+        tabBarStyle: {
+          backgroundColor: '#ffffff',
+          borderTopColor: '#e5e7eb',
+          borderTopWidth: 1,
+          height: 62,
+          paddingBottom: 8,
+          paddingTop: 6,
+        },
+        tabBarLabelStyle: {
+          fontSize: 11,
+          fontWeight: '600',
+        },
+        tabBarIcon: ({ focused, color, size }) => {
+          const icons = TAB_ICONS[route.name];
+          const iconName = focused ? icons.active : icons.inactive;
+          return <Ionicons name={iconName} size={size} color={color} />;
+        },
+      })}
+    >
+      <Tab.Screen name="Dashboard"   component={DriverDashboardScreen} />
       <Tab.Screen name="Deployments" component={AvailableDeploymentsScreen} />
-      <Tab.Screen name="Score" component={DriverScoreScreen} />
-      <Tab.Screen name="Earnings" component={EarningsScreen} />
-      <Tab.Screen name="Profile" component={ProfileSettingsScreen} />
+      <Tab.Screen name="Score"       component={DriverScoreScreen} />
+      <Tab.Screen name="Earnings"    component={EarningsScreen} />
+      <Tab.Screen name="Profile"     component={ProfileSettingsScreen} />
     </Tab.Navigator>
   );
 };
 
 export default MainTabs;
-

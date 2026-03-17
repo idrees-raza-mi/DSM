@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
-import ScreenContainer from '../components/layout/ScreenContainer';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
 import { getAvailableAssignmentsApi, reserveAssignmentApi } from '../services/driver.api';
 
@@ -42,50 +43,89 @@ const AvailableDeploymentsScreen = () => {
   };
 
   const slotLabel: Record<string, string> = { morning: 'Morning', midday: 'Midday', evening: 'Evening' };
+  const slotColor: Record<string, string>  = { morning: '#fef3c7', midday: '#dbeafe', evening: '#ede9fe' };
+  const slotTextColor: Record<string, string> = { morning: '#92400e', midday: '#1e40af', evening: '#5b21b6' };
 
-  const formatDate = (dateStr: string) => {
-    const d = new Date(dateStr);
-    return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
-  };
+  const formatDate = (dateStr: string) =>
+    new Date(dateStr).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
 
   const renderItem = ({ item }: { item: any }) => {
     const a = item.assignment;
     const loc = a.location || {};
+    const ts = a.timeSlot ?? '';
+    const isReserving = reserving === a._id;
+    const slots = item.slotsRemaining ?? 0;
+
     return (
       <View style={styles.card}>
-        <View style={styles.cardHeader}>
-          <Text style={styles.locationName}>{loc.name || 'Unknown Location'}</Text>
+        {/* Top row */}
+        <View style={styles.cardTop}>
+          <View style={styles.cardTopLeft}>
+            <Text style={styles.locationName}>{loc.name || 'Unknown Location'}</Text>
+            <Text style={styles.cityText}>{loc.city || ''}</Text>
+          </View>
           <Text style={styles.compensation}>{a.compensation} EUR</Text>
         </View>
-        <Text style={styles.cityText}>{loc.city || ''}</Text>
-        <View style={styles.detailRow}>
-          <Text style={styles.detailLabel}>{formatDate(a.date)}</Text>
-          <Text style={styles.detailValue}>{slotLabel[a.timeSlot] || a.timeSlot}</Text>
+
+        {/* Meta chips */}
+        <View style={styles.chipsRow}>
+          <View style={styles.chip}>
+            <Ionicons name="calendar-outline" size={12} color="#6b7280" />
+            <Text style={styles.chipText}>{formatDate(a.date)}</Text>
+          </View>
+          <View style={[styles.chip, { backgroundColor: slotColor[ts] ?? '#f3f4f6' }]}>
+            <Ionicons name="time-outline" size={12} color={slotTextColor[ts] ?? '#6b7280'} />
+            <Text style={[styles.chipText, { color: slotTextColor[ts] ?? '#374151', fontWeight: '600' }]}>
+              {slotLabel[ts] || ts}
+            </Text>
+          </View>
+          <View style={[styles.chip, slots <= 3 && { backgroundColor: '#fef3c7' }]}>
+            <Ionicons name="people-outline" size={12} color={slots <= 3 ? '#92400e' : '#6b7280'} />
+            <Text style={[styles.chipText, slots <= 3 && { color: '#92400e', fontWeight: '600' }]}>
+              {slots} slot{slots !== 1 ? 's' : ''} left
+            </Text>
+          </View>
         </View>
-        <View style={styles.detailRow}>
-          <Text style={styles.detailLabel}>Slots remaining</Text>
-          <Text style={styles.detailValue}>{item.slotsRemaining}</Text>
-        </View>
+
         <TouchableOpacity
-          style={[styles.reserveBtn, reserving === a._id && styles.reserveBtnDisabled]}
+          style={[styles.reserveBtn, isReserving && styles.reserveBtnDisabled]}
           onPress={() => handleReserve(a._id)}
-          disabled={reserving === a._id}
+          disabled={isReserving}
+          activeOpacity={0.85}
         >
-          <Text style={styles.reserveBtnText}>
-            {reserving === a._id ? 'Reserving...' : 'Make Binding Reservation'}
-          </Text>
+          {isReserving
+            ? <ActivityIndicator size="small" color="#fff" />
+            : <>
+                <Ionicons name="bookmark-outline" size={16} color="#fff" />
+                <Text style={styles.reserveBtnText}>Reserve Slot</Text>
+              </>
+          }
         </TouchableOpacity>
       </View>
     );
   };
 
   return (
-    <ScreenContainer>
-      <Text style={styles.title}>Available Deployments</Text>
+    <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
+      <View style={styles.headerBar}>
+        <View>
+          <Text style={styles.title}>Deployments</Text>
+          <Text style={styles.subtitle}>
+            {loading ? 'Loading...' : `${assignments.length} available slot${assignments.length !== 1 ? 's' : ''}`}
+          </Text>
+        </View>
+        <TouchableOpacity style={styles.refreshBtn} onPress={loadAssignments}>
+          <Ionicons name="refresh-outline" size={20} color="#111827" />
+        </TouchableOpacity>
+      </View>
+
       {loading ? (
-        <ActivityIndicator size="large" color="#111827" style={{ marginTop: 40 }} />
+        <ActivityIndicator size="large" color="#111827" style={{ marginTop: 60 }} />
       ) : assignments.length === 0 ? (
         <View style={styles.emptyState}>
+          <View style={styles.emptyIcon}>
+            <Ionicons name="car-outline" size={30} color="#9ca3af" />
+          </View>
           <Text style={styles.emptyTitle}>No available slots</Text>
           <Text style={styles.emptyText}>
             {state.driverProfile?.status !== 'active'
@@ -98,51 +138,97 @@ const AvailableDeploymentsScreen = () => {
           data={assignments}
           renderItem={renderItem}
           keyExtractor={(item) => item.assignment._id}
-          contentContainerStyle={{ paddingBottom: 20 }}
+          contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
         />
       )}
-    </ScreenContainer>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  title: { fontSize: 20, fontWeight: '700', color: '#111827', marginBottom: 16 },
+  safe: { flex: 1, backgroundColor: '#f9fafb' },
+
+  headerBar: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: 14,
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#f3f4f6',
+  },
+  title: { fontSize: 22, fontWeight: '800', color: '#111827' },
+  subtitle: { fontSize: 13, color: '#9ca3af', marginTop: 2 },
+  refreshBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 10,
+    backgroundColor: '#f3f4f6',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 4,
+  },
+
+  listContent: { padding: 20, paddingBottom: 30 },
+
   card: {
     backgroundColor: '#fff',
-    borderRadius: 12,
+    borderRadius: 14,
     padding: 16,
     marginBottom: 12,
     borderWidth: 1,
     borderColor: '#e5e7eb',
   },
-  cardHeader: {
+  cardTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 10,
+  },
+  cardTopLeft: { flex: 1, marginRight: 10 },
+  locationName: { fontSize: 16, fontWeight: '700', color: '#111827' },
+  cityText: { fontSize: 13, color: '#9ca3af', marginTop: 2 },
+  compensation: { fontSize: 20, fontWeight: '800', color: '#059669' },
+
+  chipsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 14 },
+  chip: {
+    flexDirection: 'row',
     alignItems: 'center',
-  },
-  locationName: { fontSize: 16, fontWeight: '700', color: '#111827', flex: 1 },
-  compensation: { fontSize: 18, fontWeight: '800', color: '#059669' },
-  cityText: { fontSize: 13, color: '#6b7280', marginTop: 2, marginBottom: 10 },
-  detailRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    gap: 4,
+    backgroundColor: '#f3f4f6',
+    paddingHorizontal: 8,
     paddingVertical: 4,
+    borderRadius: 6,
   },
-  detailLabel: { fontSize: 14, color: '#6b7280' },
-  detailValue: { fontSize: 14, fontWeight: '600', color: '#111827' },
+  chipText: { fontSize: 12, color: '#6b7280' },
+
   reserveBtn: {
     backgroundColor: '#111827',
-    borderRadius: 8,
-    paddingVertical: 12,
+    borderRadius: 10,
+    paddingVertical: 13,
+    flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 12,
+    justifyContent: 'center',
+    gap: 7,
   },
-  reserveBtnDisabled: { opacity: 0.6 },
+  reserveBtnDisabled: { opacity: 0.5 },
   reserveBtnText: { color: '#fff', fontWeight: '700', fontSize: 15 },
-  emptyState: { alignItems: 'center', marginTop: 60 },
-  emptyTitle: { fontSize: 18, fontWeight: '700', color: '#111827', marginBottom: 8 },
-  emptyText: { fontSize: 14, color: '#6b7280', textAlign: 'center' },
+
+  emptyState: { alignItems: 'center', marginTop: 80, paddingHorizontal: 40 },
+  emptyIcon: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: '#f3f4f6',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 14,
+  },
+  emptyTitle: { fontSize: 17, fontWeight: '700', color: '#111827', marginBottom: 6 },
+  emptyText: { fontSize: 14, color: '#9ca3af', textAlign: 'center', lineHeight: 20 },
 });
 
 export default AvailableDeploymentsScreen;

@@ -1,8 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
-import ScreenContainer from '../components/layout/ScreenContainer';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
 import { getBillingPeriodsApi, generateBillingPeriodApi, submitInvoiceApi } from '../services/driver.api';
+
+const MONTH_NAMES = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 const EarningsScreen = () => {
   const { state } = useAuth();
@@ -30,18 +33,14 @@ const EarningsScreen = () => {
   const handleGenerate = async () => {
     if (!state.token) return;
     const now = new Date();
-    // Generate for previous month
-    let month = now.getMonth(); // 0-indexed, so current month -1
+    let month = now.getMonth();
     let year = now.getFullYear();
-    if (month === 0) {
-      month = 12;
-      year -= 1;
-    }
+    if (month === 0) { month = 12; year -= 1; }
 
     setGenerating(true);
     try {
       await generateBillingPeriodApi(state.token, month, year);
-      Alert.alert('Generated', `Billing period for ${month}/${year} created.`);
+      Alert.alert('Generated', `Billing period for ${MONTH_NAMES[month]} ${year} created.`);
       loadPeriods();
     } catch (err: any) {
       Alert.alert('Info', err.response?.data?.message || 'Could not generate billing period.');
@@ -52,7 +51,6 @@ const EarningsScreen = () => {
 
   const handleUploadInvoice = async (periodId: string, amount: number) => {
     if (!state.token) return;
-    // In production, this would open a file picker. Using placeholder URL.
     try {
       await submitInvoiceApi(state.token, periodId, 'invoice-upload-placeholder.pdf', amount);
       Alert.alert('Submitted', 'Invoice submitted for admin review.');
@@ -62,30 +60,31 @@ const EarningsScreen = () => {
     }
   };
 
-  const monthNames = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-
   const totalEarnings = periods.reduce((sum, p) => sum + (p.totalAmount || 0), 0);
 
   const renderPeriod = ({ item }: { item: any }) => (
     <View style={styles.card}>
-      <View style={styles.cardHeader}>
-        <Text style={styles.periodLabel}>
-          {monthNames[item.month]} {item.year}
-        </Text>
+      <View style={styles.cardTop}>
+        <View>
+          <Text style={styles.periodLabel}>{MONTH_NAMES[item.month]} {item.year}</Text>
+          <Text style={styles.missionCount}>{item.totalMissions} mission{item.totalMissions !== 1 ? 's' : ''}</Text>
+        </View>
         <Text style={styles.periodAmount}>{item.totalAmount.toFixed(2)} EUR</Text>
       </View>
-      <Text style={styles.missionCount}>{item.totalMissions} mission(s)</Text>
 
       {item.missions && item.missions.length > 0 && (
         <View style={styles.missionList}>
           {item.missions.slice(0, 3).map((m: any, i: number) => (
             <View key={i} style={styles.missionRow}>
-              <Text style={styles.missionLocation}>{m.location} - {m.timeSlot}</Text>
+              <View style={styles.missionLeft}>
+                <Ionicons name="location-outline" size={12} color="#9ca3af" />
+                <Text style={styles.missionLocation}>{m.location} — {m.timeSlot}</Text>
+              </View>
               <Text style={styles.missionPay}>{m.compensation} EUR</Text>
             </View>
           ))}
           {item.missions.length > 3 && (
-            <Text style={styles.moreText}>+{item.missions.length - 3} more</Text>
+            <Text style={styles.moreText}>+{item.missions.length - 3} more missions</Text>
           )}
         </View>
       )}
@@ -93,114 +92,195 @@ const EarningsScreen = () => {
       <TouchableOpacity
         style={styles.invoiceBtn}
         onPress={() => handleUploadInvoice(item._id, item.totalAmount)}
+        activeOpacity={0.85}
       >
+        <Ionicons name="document-attach-outline" size={16} color="#111827" />
         <Text style={styles.invoiceBtnText}>Upload Invoice</Text>
       </TouchableOpacity>
     </View>
   );
 
   return (
-    <ScreenContainer>
-      <Text style={styles.title}>Earnings</Text>
+    <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
+      <FlatList
+        data={periods}
+        renderItem={renderPeriod}
+        keyExtractor={(item) => item._id}
+        showsVerticalScrollIndicator={false}
+        ListHeaderComponent={
+          <>
+            {/* Header bar */}
+            <View style={styles.headerBar}>
+              <Text style={styles.title}>Earnings</Text>
+            </View>
 
-      <View style={styles.summaryCard}>
-        <Text style={styles.summaryLabel}>Total Earnings</Text>
-        <Text style={styles.summaryAmount}>{totalEarnings.toFixed(2)} EUR</Text>
-        <Text style={styles.summaryPeriods}>{periods.length} billing period(s)</Text>
-      </View>
+            {/* Summary card */}
+            <View style={styles.summaryCard}>
+              <Text style={styles.summaryLabel}>Total Earnings</Text>
+              <Text style={styles.summaryAmount}>{totalEarnings.toFixed(2)}</Text>
+              <Text style={styles.summaryUnit}>EUR</Text>
+              <View style={styles.summaryStats}>
+                <View style={styles.summaryStat}>
+                  <Text style={styles.summaryStatValue}>{periods.length}</Text>
+                  <Text style={styles.summaryStatLabel}>Periods</Text>
+                </View>
+                <View style={styles.summaryStatDivider} />
+                <View style={styles.summaryStat}>
+                  <Text style={styles.summaryStatValue}>
+                    {periods.reduce((s, p) => s + (p.totalMissions || 0), 0)}
+                  </Text>
+                  <Text style={styles.summaryStatLabel}>Missions</Text>
+                </View>
+              </View>
+            </View>
 
-      <View style={styles.headerRow}>
-        <Text style={styles.sectionTitle}>Billing Periods</Text>
-        <TouchableOpacity
-          style={[styles.generateBtn, generating && { opacity: 0.6 }]}
-          onPress={handleGenerate}
-          disabled={generating}
-        >
-          <Text style={styles.generateBtnText}>
-            {generating ? 'Generating...' : 'Generate Last Month'}
-          </Text>
-        </TouchableOpacity>
-      </View>
+            {/* Section header */}
+            <View style={styles.sectionRow}>
+              <Text style={styles.sectionTitle}>Billing Periods</Text>
+              <TouchableOpacity
+                style={[styles.generateBtn, generating && { opacity: 0.5 }]}
+                onPress={handleGenerate}
+                disabled={generating}
+              >
+                {generating
+                  ? <ActivityIndicator size="small" color="#fff" />
+                  : <>
+                      <Ionicons name="add-outline" size={14} color="#fff" />
+                      <Text style={styles.generateBtnText}>Generate</Text>
+                    </>
+                }
+              </TouchableOpacity>
+            </View>
 
-      {loading ? (
-        <ActivityIndicator size="large" color="#111827" style={{ marginTop: 30 }} />
-      ) : periods.length === 0 ? (
-        <View style={styles.emptyState}>
-          <Text style={styles.emptyText}>
-            No billing periods yet. Complete missions and generate your monthly summary.
-          </Text>
-        </View>
-      ) : (
-        <FlatList
-          data={periods}
-          renderItem={renderPeriod}
-          keyExtractor={(item) => item._id}
-          contentContainerStyle={{ paddingBottom: 20 }}
-          showsVerticalScrollIndicator={false}
-        />
-      )}
-    </ScreenContainer>
+            {loading && (
+              <ActivityIndicator size="large" color="#111827" style={{ marginTop: 40 }} />
+            )}
+          </>
+        }
+        ListEmptyComponent={
+          !loading ? (
+            <View style={styles.emptyState}>
+              <View style={styles.emptyIcon}>
+                <Ionicons name="wallet-outline" size={28} color="#9ca3af" />
+              </View>
+              <Text style={styles.emptyTitle}>No billing periods</Text>
+              <Text style={styles.emptyText}>Complete missions and tap Generate to create your monthly summary.</Text>
+            </View>
+          ) : null
+        }
+        contentContainerStyle={styles.listContent}
+      />
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  title: { fontSize: 20, fontWeight: '700', color: '#111827', marginBottom: 16 },
+  safe: { flex: 1, backgroundColor: '#f9fafb' },
+  listContent: { paddingBottom: 30 },
+
+  headerBar: {
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: 14,
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#f3f4f6',
+    marginBottom: 16,
+  },
+  title: { fontSize: 22, fontWeight: '800', color: '#111827' },
+
   summaryCard: {
     backgroundColor: '#111827',
-    borderRadius: 12,
-    padding: 20,
+    borderRadius: 16,
+    padding: 24,
+    marginHorizontal: 20,
     alignItems: 'center',
     marginBottom: 20,
   },
-  summaryLabel: { color: '#9ca3af', fontSize: 14 },
-  summaryAmount: { color: '#fff', fontSize: 32, fontWeight: '800', marginVertical: 4 },
-  summaryPeriods: { color: '#6b7280', fontSize: 13 },
-  headerRow: {
+  summaryLabel: { color: '#9ca3af', fontSize: 13, fontWeight: '600', letterSpacing: 0.4 },
+  summaryAmount: { color: '#fff', fontSize: 44, fontWeight: '900', marginTop: 4 },
+  summaryUnit: { color: '#6b7280', fontSize: 16, fontWeight: '600', marginBottom: 16 },
+  summaryStats: { flexDirection: 'row', alignItems: 'center', gap: 20 },
+  summaryStat: { alignItems: 'center' },
+  summaryStatValue: { color: '#fff', fontSize: 20, fontWeight: '800' },
+  summaryStatLabel: { color: '#6b7280', fontSize: 12, marginTop: 2 },
+  summaryStatDivider: { width: 1, height: 30, backgroundColor: '#374151' },
+
+  sectionRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    paddingHorizontal: 20,
     marginBottom: 12,
   },
-  sectionTitle: { fontSize: 16, fontWeight: '600', color: '#111827' },
+  sectionTitle: { fontSize: 15, fontWeight: '700', color: '#111827' },
   generateBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
     backgroundColor: '#3b82f6',
     borderRadius: 8,
     paddingVertical: 8,
     paddingHorizontal: 14,
   },
   generateBtnText: { color: '#fff', fontWeight: '600', fontSize: 13 },
+
   card: {
     backgroundColor: '#fff',
-    borderRadius: 12,
+    borderRadius: 14,
     padding: 16,
+    marginHorizontal: 20,
     marginBottom: 12,
     borderWidth: 1,
     borderColor: '#e5e7eb',
   },
-  cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  periodLabel: { fontSize: 16, fontWeight: '700', color: '#111827' },
-  periodAmount: { fontSize: 18, fontWeight: '800', color: '#059669' },
-  missionCount: { fontSize: 13, color: '#6b7280', marginTop: 2 },
-  missionList: { marginTop: 10 },
-  missionRow: {
+  cardTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingVertical: 3,
+    alignItems: 'flex-start',
+    marginBottom: 10,
   },
-  missionLocation: { fontSize: 13, color: '#374151' },
-  missionPay: { fontSize: 13, fontWeight: '600', color: '#111827' },
-  moreText: { fontSize: 12, color: '#9ca3af', marginTop: 4 },
+  periodLabel: { fontSize: 16, fontWeight: '700', color: '#111827' },
+  missionCount: { fontSize: 13, color: '#9ca3af', marginTop: 2 },
+  periodAmount: { fontSize: 20, fontWeight: '800', color: '#059669' },
+
+  missionList: {
+    borderTopWidth: 1,
+    borderTopColor: '#f3f4f6',
+    paddingTop: 10,
+    marginBottom: 12,
+    gap: 6,
+  },
+  missionRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  missionLeft: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  missionLocation: { fontSize: 13, color: '#6b7280' },
+  missionPay: { fontSize: 13, fontWeight: '700', color: '#111827' },
+  moreText: { fontSize: 12, color: '#9ca3af' },
+
   invoiceBtn: {
-    borderWidth: 1,
-    borderColor: '#111827',
-    borderRadius: 8,
-    paddingVertical: 10,
+    flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 12,
+    justifyContent: 'center',
+    gap: 6,
+    borderWidth: 1,
+    borderColor: '#d1d5db',
+    borderRadius: 10,
+    paddingVertical: 11,
   },
   invoiceBtnText: { color: '#111827', fontWeight: '700', fontSize: 14 },
-  emptyState: { alignItems: 'center', marginTop: 30 },
-  emptyText: { fontSize: 14, color: '#6b7280', textAlign: 'center' },
+
+  emptyState: { alignItems: 'center', marginTop: 20, paddingHorizontal: 40 },
+  emptyIcon: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#f3f4f6',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+  },
+  emptyTitle: { fontSize: 17, fontWeight: '700', color: '#111827', marginBottom: 6 },
+  emptyText: { fontSize: 14, color: '#9ca3af', textAlign: 'center', lineHeight: 20 },
 });
 
 export default EarningsScreen;
