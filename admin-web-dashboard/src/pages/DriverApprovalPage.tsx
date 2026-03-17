@@ -21,6 +21,8 @@ const DriverApprovalPage = () => {
 
   useEffect(() => {
     load();
+    const interval = setInterval(load, 30_000);
+    return () => clearInterval(interval);
   }, []);
 
   const handleApprove = async (id: string) => {

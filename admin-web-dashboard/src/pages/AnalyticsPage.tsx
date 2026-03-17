@@ -10,8 +10,8 @@ const AnalyticsPage = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const load = async () => {
-      setLoading(true);
+    const load = async (silent = false) => {
+      if (!silent) setLoading(true);
       try {
         const [oRes, lRes, bRes] = await Promise.all([
           getOverview(),
@@ -28,6 +28,8 @@ const AnalyticsPage = () => {
       }
     };
     load();
+    const interval = setInterval(() => load(true), 30_000);
+    return () => clearInterval(interval);
   }, []);
 
   if (loading) {

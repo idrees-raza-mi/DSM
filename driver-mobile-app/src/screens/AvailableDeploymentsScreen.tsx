@@ -1,19 +1,23 @@
-import React, { useEffect, useState, useCallback } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
+import React, { useState, useCallback } from 'react';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert, ActivityIndicator, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '../context/AuthContext';
 import { getAvailableAssignmentsApi, reserveAssignmentApi } from '../services/driver.api';
+
+const POLL_INTERVAL = 30_000;
 
 const AvailableDeploymentsScreen = () => {
   const { state } = useAuth();
   const [assignments, setAssignments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [reserving, setReserving] = useState<string | null>(null);
 
-  const loadAssignments = useCallback(async () => {
+  const loadAssignments = useCallback(async (silent = false) => {
     if (!state.token) return;
-    setLoading(true);
+    if (!silent) setLoading(true);
     try {
       const res = await getAvailableAssignmentsApi(state.token);
       setAssignments(res.data.data || []);
@@ -24,8 +28,19 @@ const AvailableDeploymentsScreen = () => {
     }
   }, [state.token]);
 
-  useEffect(() => {
-    loadAssignments();
+  // Refresh on every tab focus + poll every 30s while on screen
+  useFocusEffect(
+    useCallback(() => {
+      loadAssignments();
+      const interval = setInterval(() => loadAssignments(true), POLL_INTERVAL);
+      return () => clearInterval(interval);
+    }, [loadAssignments])
+  );
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await loadAssignments(true);
+    setRefreshing(false);
   }, [loadAssignments]);
 
   const handleReserve = async (assignmentId: string) => {
@@ -140,6 +155,7 @@ const AvailableDeploymentsScreen = () => {
           keyExtractor={(item) => item.assignment._id}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#111827" />}
         />
       )}
     </SafeAreaView>

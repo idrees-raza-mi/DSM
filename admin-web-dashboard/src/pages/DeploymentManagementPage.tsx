@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useAssignmentsApi } from '../services/assignments.api';
 import './DeploymentManagementPage.css';
 
@@ -48,7 +48,17 @@ const DeploymentManagementPage = () => {
     }
   };
 
+  // Keep a ref to the latest loadData so the interval always uses current filters
+  const loadDataRef = useRef(loadData);
+  useEffect(() => { loadDataRef.current = loadData; });
+
   useEffect(() => { loadData(); }, [dateFilter, cityFilter]);
+
+  // Auto-poll every 30s so new deployments appear without manual refresh
+  useEffect(() => {
+    const interval = setInterval(() => loadDataRef.current(), 30_000);
+    return () => clearInterval(interval);
+  }, []);
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();

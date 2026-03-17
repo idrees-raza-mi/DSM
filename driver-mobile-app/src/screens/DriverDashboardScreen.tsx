@@ -1,23 +1,27 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity,
-  Alert, ActivityIndicator, TextInput, ScrollView,
+  Alert, ActivityIndicator, TextInput, RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '../context/AuthContext';
 import { getMyAssignmentsApi, confirmAssignmentApi, checkInApi, cancelAssignmentApi } from '../services/driver.api';
+
+const POLL_INTERVAL = 30_000;
 
 const DriverDashboardScreen = () => {
   const { state, refreshDriver } = useAuth();
   const [bookings, setBookings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [checkInCode, setCheckInCode] = useState('');
   const [activeCheckIn, setActiveCheckIn] = useState<string | null>(null);
 
-  const loadBookings = useCallback(async () => {
+  const loadBookings = useCallback(async (silent = false) => {
     if (!state.token) return;
-    setLoading(true);
+    if (!silent) setLoading(true);
     try {
       const res = await getMyAssignmentsApi(state.token);
       setBookings(res.data.data || []);
@@ -28,9 +32,19 @@ const DriverDashboardScreen = () => {
     }
   }, [state.token]);
 
-  useEffect(() => {
-    loadBookings();
-    refreshDriver();
+  useFocusEffect(
+    useCallback(() => {
+      loadBookings();
+      refreshDriver();
+      const interval = setInterval(() => { loadBookings(true); refreshDriver(); }, POLL_INTERVAL);
+      return () => clearInterval(interval);
+    }, [loadBookings])
+  );
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await Promise.all([loadBookings(true), refreshDriver()]);
+    setRefreshing(false);
   }, [loadBookings]);
 
   const handleConfirm = async (bookingId: string) => {
@@ -270,6 +284,7 @@ const DriverDashboardScreen = () => {
           keyExtractor={(item) => item._id}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#111827" />}
         />
       )}
     </SafeAreaView>

@@ -1,21 +1,24 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
+import React, { useState, useCallback } from 'react';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert, ActivityIndicator, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '../context/AuthContext';
 import { getBillingPeriodsApi, generateBillingPeriodApi, submitInvoiceApi } from '../services/driver.api';
 
 const MONTH_NAMES = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const POLL_INTERVAL = 30_000;
 
 const EarningsScreen = () => {
   const { state } = useAuth();
   const [periods, setPeriods] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [generating, setGenerating] = useState(false);
 
-  const loadPeriods = async () => {
+  const loadPeriods = useCallback(async (silent = false) => {
     if (!state.token) return;
-    setLoading(true);
+    if (!silent) setLoading(true);
     try {
       const res = await getBillingPeriodsApi(state.token);
       setPeriods(res.data.data || []);
@@ -24,11 +27,21 @@ const EarningsScreen = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  useEffect(() => {
-    loadPeriods();
   }, [state.token]);
+
+  useFocusEffect(
+    useCallback(() => {
+      loadPeriods();
+      const interval = setInterval(() => loadPeriods(true), POLL_INTERVAL);
+      return () => clearInterval(interval);
+    }, [loadPeriods])
+  );
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await loadPeriods(true);
+    setRefreshing(false);
+  }, [loadPeriods]);
 
   const handleGenerate = async () => {
     if (!state.token) return;
@@ -107,6 +120,7 @@ const EarningsScreen = () => {
         renderItem={renderPeriod}
         keyExtractor={(item) => item._id}
         showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#111827" />}
         ListHeaderComponent={
           <>
             {/* Header bar */}

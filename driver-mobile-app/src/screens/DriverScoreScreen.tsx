@@ -1,9 +1,12 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, ActivityIndicator } from 'react-native';
+import React, { useState, useCallback } from 'react';
+import { View, Text, StyleSheet, FlatList, ActivityIndicator, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '../context/AuthContext';
 import { getScoreApi } from '../services/driver.api';
+
+const POLL_INTERVAL = 30_000;
 
 const RULES = [
   { label: 'Completed mission',        delta: '+2',  color: '#059669', icon: 'checkmark-circle-outline' as const },
@@ -22,27 +25,40 @@ const DriverScoreScreen = () => {
   const { state } = useAuth();
   const [scoreData, setScoreData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
-  useEffect(() => {
-    const load = async () => {
-      if (!state.token) return;
-      try {
-        const res = await getScoreApi(state.token);
-        setScoreData(res.data.data);
-      } catch {
-        setScoreData({
-          currentScore: state.driverProfile?.currentScore ?? 100,
-          tier: 'normal',
-          history: [],
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
-    load();
+  const loadScore = useCallback(async (silent = false) => {
+    if (!state.token) return;
+    if (!silent) setLoading(true);
+    try {
+      const res = await getScoreApi(state.token);
+      setScoreData(res.data.data);
+    } catch {
+      setScoreData((prev: any) => prev ?? {
+        currentScore: state.driverProfile?.currentScore ?? 100,
+        tier: 'normal',
+        history: [],
+      });
+    } finally {
+      setLoading(false);
+    }
   }, [state.token]);
 
-  if (loading) {
+  useFocusEffect(
+    useCallback(() => {
+      loadScore();
+      const interval = setInterval(() => loadScore(true), POLL_INTERVAL);
+      return () => clearInterval(interval);
+    }, [loadScore])
+  );
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await loadScore(true);
+    setRefreshing(false);
+  }, [loadScore]);
+
+  if (loading && !scoreData) {
     return (
       <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
         <ActivityIndicator size="large" color="#111827" style={{ marginTop: 80 }} />
@@ -101,6 +117,7 @@ const DriverScoreScreen = () => {
         renderItem={renderHistoryItem}
         keyExtractor={(item) => item._id}
         showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#111827" />}
         ListHeaderComponent={
           <>
             {/* Page title */}
