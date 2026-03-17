@@ -8,7 +8,9 @@
       "Bash(xargs cat:*)",
       "Bash(ipconfig:*)",
       "Bash(npm:*)",
-      "Bash(npx expo:*)"
+      "Bash(npx expo:*)",
+      "Bash(read f:*)",
+      "Bash(wc:)"
     ]
   }
 }
