@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios, { AxiosInstance } from 'axios';
 import Constants from 'expo-constants';
 import { Platform } from 'react-native';
 
@@ -24,8 +24,11 @@ export const apiClient = axios.create({
   timeout: 10000,
 });
 
-export function withAuth(token: string) {
-  const client = apiClient.create();
+export function withAuth(token: string): AxiosInstance {
+  const client = axios.create({
+    baseURL: `${API_BASE_URL}/api`,
+    timeout: 10000,
+  });
   client.interceptors.request.use((config) => {
     if (token) {
       config.headers = config.headers ?? {};
