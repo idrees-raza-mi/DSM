@@ -53,3 +53,13 @@ export async function updateLocation(locationId: string, data: Partial<{
   await location.save();
   return location;
 }
+
+export async function deleteLocation(locationId: string): Promise<void> {
+  const location = await Location.findById(locationId);
+  if (!location) {
+    throw Object.assign(new Error('Location not found'), { statusCode: 404 });
+  }
+  // Soft-delete by deactivating so existing assignments keep their reference
+  location.isActive = false;
+  await location.save();
+}

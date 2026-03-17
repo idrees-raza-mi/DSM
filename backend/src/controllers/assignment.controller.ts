@@ -64,6 +64,47 @@ export async function cancel(req: AuthRequest, res: Response, next: NextFunction
   }
 }
 
+// Admin: get single assignment
+export async function getAssignment(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const assignment = await assignmentService.getAssignmentById(req.params.id);
+    sendSuccess(res, assignment);
+  } catch (err) {
+    next(err);
+  }
+}
+
+// Admin: update assignment
+export async function updateAssignment(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const assignment = await assignmentService.updateAssignment(req.params.id, req.body);
+    sendSuccess(res, assignment, 'Assignment updated');
+  } catch (err) {
+    next(err);
+  }
+}
+
+// Admin: delete assignment
+export async function deleteAssignment(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    await assignmentService.deleteAssignment(req.params.id);
+    sendSuccess(res, null, 'Assignment deleted');
+  } catch (err) {
+    next(err);
+  }
+}
+
+// Admin: deactivate/activate assignment
+export async function setAssignmentActive(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const isActive = req.body.isActive === true || req.body.isActive === 'true';
+    const assignment = await assignmentService.toggleAssignmentActive(req.params.id, isActive);
+    sendSuccess(res, assignment, `Assignment ${isActive ? 'activated' : 'deactivated'}`);
+  } catch (err) {
+    next(err);
+  }
+}
+
 // Admin endpoints
 export async function createAssignment(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
   try {

@@ -373,6 +373,80 @@ export async function createAssignment(data: {
   return assignment;
 }
 
+// Admin: get single assignment with full booking breakdown
+export async function getAssignmentById(assignmentId: string): Promise<any> {
+  const assignment = await Assignment.findById(assignmentId).populate('location');
+  if (!assignment) {
+    throw Object.assign(new Error('Assignment not found'), { statusCode: 404 });
+  }
+  const bookings = await Booking.find({ assignment: assignmentId })
+    .populate('driver', 'name email phone currentScore');
+  return { ...assignment.toObject(), bookings };
+}
+
+// Admin: update assignment fields
+export async function updateAssignment(
+  assignmentId: string,
+  data: Partial<{ requiredDrivers: number; compensation: number; checkinCode: string; date: string; timeSlot: string }>
+): Promise<any> {
+  const assignment = await Assignment.findById(assignmentId);
+  if (!assignment) {
+    throw Object.assign(new Error('Assignment not found'), { statusCode: 404 });
+  }
+
+  if (data.requiredDrivers !== undefined) {
+    const location = await Location.findById(assignment.location);
+    const overbookingSlots = Math.ceil(data.requiredDrivers * ((location?.overbookingPercent ?? 5) / 100));
+    assignment.requiredDrivers = data.requiredDrivers;
+    assignment.maxDrivers = data.requiredDrivers + overbookingSlots;
+  }
+  if (data.compensation !== undefined) assignment.compensation = data.compensation;
+  if (data.checkinCode !== undefined) assignment.checkinCode = data.checkinCode;
+  if (data.timeSlot !== undefined) {
+    assignment.timeSlot = data.timeSlot as any;
+    const startHours: Record<string, number> = { morning: 8, midday: 13, evening: 18 };
+    const startTime = new Date(assignment.date);
+    startTime.setHours(startHours[data.timeSlot] || 8, 0, 0, 0);
+    assignment.startTime = startTime;
+  }
+
+  await assignment.save();
+  return assignment.populate('location');
+}
+
+// Admin: delete assignment (only if no active bookings)
+export async function deleteAssignment(assignmentId: string): Promise<void> {
+  const assignment = await Assignment.findById(assignmentId);
+  if (!assignment) {
+    throw Object.assign(new Error('Assignment not found'), { statusCode: 404 });
+  }
+  const activeBookings = await Booking.countDocuments({
+    assignment: assignmentId,
+    status: { $in: ['reserved', 'confirmed', 'checked_in'] },
+  });
+  if (activeBookings > 0) {
+    throw Object.assign(
+      new Error(`Cannot delete: ${activeBookings} active booking(s) exist. Deactivate instead.`),
+      { statusCode: 409 }
+    );
+  }
+  await Booking.deleteMany({ assignment: assignmentId });
+  await Assignment.findByIdAndDelete(assignmentId);
+}
+
+// Admin: toggle isActive
+export async function toggleAssignmentActive(assignmentId: string, isActive: boolean): Promise<any> {
+  const assignment = await Assignment.findByIdAndUpdate(
+    assignmentId,
+    { isActive },
+    { new: true }
+  ).populate('location');
+  if (!assignment) {
+    throw Object.assign(new Error('Assignment not found'), { statusCode: 404 });
+  }
+  return assignment;
+}
+
 // Admin: list all assignments with booking counts
 export async function listAssignments(filters?: {
   date?: string;

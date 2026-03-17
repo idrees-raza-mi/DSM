@@ -29,3 +29,12 @@ export async function updateLocation(req: Request, res: Response, next: NextFunc
     next(err);
   }
 }
+
+export async function deleteLocation(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    await locationService.deleteLocation(req.params.id);
+    sendSuccess(res, null, 'Location deactivated');
+  } catch (err) {
+    next(err);
+  }
+}

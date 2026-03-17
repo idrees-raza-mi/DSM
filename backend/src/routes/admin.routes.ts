@@ -22,8 +22,12 @@ router.post('/drivers/:id/request-more-documents', adminController.requestMoreDo
 router.put('/drivers/:id/status', adminController.updateDriverStatus);
 
 // Assignment management
-router.post('/assignments', assignmentController.createAssignment);
 router.get('/assignments', assignmentController.listAssignments);
+router.post('/assignments', assignmentController.createAssignment);
+router.get('/assignments/:id', assignmentController.getAssignment);
+router.put('/assignments/:id', assignmentController.updateAssignment);
+router.delete('/assignments/:id', assignmentController.deleteAssignment);
+router.patch('/assignments/:id/active', assignmentController.setAssignmentActive);
 
 // Invoices
 router.get('/invoices', billingController.listAllInvoices);
@@ -41,6 +45,7 @@ router.get('/analytics/billing', analyticsController.getBilling);
 router.post('/locations', locationController.createLocation);
 router.get('/locations', locationController.listLocations);
 router.put('/locations/:id', locationController.updateLocation);
+router.delete('/locations/:id', locationController.deleteLocation);
 
 // Admin account management
 router.get('/admins', adminController.listAdmins);
