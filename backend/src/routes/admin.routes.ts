@@ -42,4 +42,9 @@ router.post('/locations', locationController.createLocation);
 router.get('/locations', locationController.listLocations);
 router.put('/locations/:id', locationController.updateLocation);
 
+// Admin account management
+router.get('/admins', adminController.listAdmins);
+router.post('/admins', adminController.createAdmin);
+router.delete('/admins/:id', adminController.deleteAdmin);
+
 export default router;

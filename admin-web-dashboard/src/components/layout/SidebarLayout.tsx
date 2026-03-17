@@ -17,6 +17,7 @@ const SidebarLayout = ({ children }: Props) => {
     { path: '/drivers', label: 'All Drivers' },
     { path: '/deployments', label: 'Deployments' },
     { path: '/billing', label: 'Billing' },
+    { path: '/admins', label: 'Admin Accounts' },
   ];
 
   return (

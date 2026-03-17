@@ -70,3 +70,41 @@ export async function updateDriverStatus(req: AuthRequest, res: Response, next: 
     next(err);
   }
 }
+
+export async function createAdmin(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const { name, email, password, phone } = req.body;
+    const admin = await adminService.createAdmin({ name, email, password, phone });
+    sendSuccess(res, {
+      id: admin._id,
+      name: admin.name,
+      email: admin.email,
+      phone: admin.phone,
+      role: admin.role,
+    }, 'Admin account created');
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function listAdmins(_req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const admins = await adminService.listAdmins();
+    sendSuccess(res, admins);
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function deleteAdmin(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+  try {
+    // Prevent self-deletion
+    if (req.user!.userId === req.params.id) {
+      throw Object.assign(new Error('You cannot delete your own account'), { statusCode: 400 });
+    }
+    await adminService.deleteAdmin(req.params.id);
+    sendSuccess(res, null, 'Admin account removed');
+  } catch (err) {
+    next(err);
+  }
+}

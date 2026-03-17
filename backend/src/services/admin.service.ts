@@ -83,3 +83,37 @@ export async function updateDriverStatus(driverId: string, status: string): Prom
   await driver.save();
   return driver;
 }
+
+export async function createAdmin(data: {
+  name: string;
+  email: string;
+  password: string;
+  phone: string;
+}): Promise<IUser> {
+  const existing = await User.findOne({ email: data.email.toLowerCase() });
+  if (existing) {
+    throw Object.assign(new Error('Email already in use'), { statusCode: 409 });
+  }
+  const admin = await User.create({
+    name: data.name,
+    email: data.email.toLowerCase(),
+    phone: data.phone,
+    password: data.password,
+    role: 'admin',
+    status: 'active',
+    onboardingStep: 4,
+  });
+  return admin;
+}
+
+export async function listAdmins(): Promise<IUser[]> {
+  return User.find({ role: 'admin' }).select('-password').sort({ createdAt: -1 });
+}
+
+export async function deleteAdmin(adminId: string): Promise<void> {
+  const admin = await User.findById(adminId);
+  if (!admin || admin.role !== 'admin') {
+    throw Object.assign(new Error('Admin not found'), { statusCode: 404 });
+  }
+  await User.findByIdAndDelete(adminId);
+}

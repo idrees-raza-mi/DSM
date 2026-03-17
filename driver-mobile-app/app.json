@@ -1,25 +1,31 @@
 {
   "expo": {
-  "name": "DriverMobileApp",
-  "slug": "driver-mobile-app",
-  "version": "0.1.0",
-  "platforms": ["ios", "android", "web"],
+    "name": "DriverMobileApp",
+    "slug": "driver-mobile-app",
+    "version": "0.1.0",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
     "orientation": "portrait",
     "updates": {
       "fallbackToCacheTimeout": 0
     },
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": true
     },
     "android": {
       "adaptiveIcon": {
-      "backgroundColor": "#ffffff"
+        "backgroundColor": "#ffffff"
       }
     },
     "web": {},
     "extra": {
-      "apiUrl": "http://192.168.100.41:4000"
+      "apiUrl": "http://192.168.100.58:4000"
     }
   }
 }
