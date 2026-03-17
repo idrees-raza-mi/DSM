@@ -8,49 +8,15 @@
   justify-content: space-between;
   align-items: center;
 }
-.page-title {
-  font-size: 22px;
-  font-weight: 700;
-}
-.page-subtitle {
-  font-size: 14px;
-  color: #6b7280;
-}
-.filters-bar {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  flex-wrap: wrap;
-}
-.search-form {
-  display: flex;
-  gap: 8px;
-  flex: 1;
-  min-width: 200px;
-}
-.search-input {
-  flex: 1;
-  padding: 8px 12px;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  font-size: 14px;
-}
+.page-title { font-size: 22px; font-weight: 700; }
+.page-subtitle { font-size: 14px; color: #6b7280; }
+.filters-bar { display: flex; gap: 12px; flex-wrap: wrap; }
 .filter-select {
   padding: 8px 12px;
   border: 1px solid #d1d5db;
   border-radius: 8px;
   font-size: 14px;
   background: #fff;
-}
-.btn-primary {
-  border-radius: 8px;
-  border: none;
-  padding: 8px 14px;
-  background-color: #111827;
-  color: #fff;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
 }
 .data-table {
   width: 100%;
@@ -68,16 +34,15 @@
   font-weight: 600;
   color: #6b7280;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
 }
 .data-table td {
   padding: 10px 14px;
   font-size: 14px;
   border-top: 1px solid #f3f4f6;
 }
-.data-table tr:hover td {
-  background: #f9fafb;
-}
+.data-table tr:hover td { background: #f9fafb; }
+.amount-cell { font-weight: 600; font-variant-numeric: tabular-nums; }
+.text-muted { font-size: 12px; color: #9ca3af; }
 .badge {
   padding: 2px 8px;
   border-radius: 12px;
@@ -88,13 +53,9 @@
 .badge-green { background: #d1fae5; color: #065f46; }
 .badge-blue { background: #dbeafe; color: #1e40af; }
 .badge-yellow { background: #fef3c7; color: #92400e; }
-.badge-orange { background: #ffedd5; color: #9a3412; }
 .badge-red { background: #fee2e2; color: #991b1b; }
 .badge-gray { background: #f3f4f6; color: #374151; }
-.action-cell {
-  display: flex;
-  gap: 6px;
-}
+.action-cell { display: flex; gap: 6px; align-items: center; }
 .btn-sm {
   padding: 4px 10px;
   border: none;
@@ -105,7 +66,6 @@
   color: #fff;
 }
 .btn-green { background: #059669; }
-.btn-orange { background: #d97706; }
 .btn-red { background: #dc2626; }
 .placeholder-card {
   background-color: #ffffff;

@@ -12,9 +12,11 @@ const SidebarLayout = ({ children }: Props) => {
   const { admin, logout } = useAuth();
 
   const navItems = [
-    { path: '/drivers/pending', label: 'Driver approvals' },
-    { path: '/drivers', label: 'Drivers' },
+    { path: '/analytics', label: 'Dashboard' },
+    { path: '/drivers/pending', label: 'Driver Approvals' },
+    { path: '/drivers', label: 'All Drivers' },
     { path: '/deployments', label: 'Deployments' },
+    { path: '/billing', label: 'Billing' },
   ];
 
   return (

@@ -20,10 +20,10 @@ const RootNavigator = () => {
   const onboardingStep = state.driverProfile?.onboardingStep;
   const driverStatus = state.driverProfile?.status;
 
+  // onboardingStep: 0=registered, 1=profile, 2=docs, 3=submitted, 4=approved
   const needsOnboarding =
     isAuthenticated &&
-    onboardingStep &&
-    onboardingStep !== 'APPROVED' &&
+    (onboardingStep === undefined || onboardingStep < 4) &&
     driverStatus !== 'active';
 
   return (

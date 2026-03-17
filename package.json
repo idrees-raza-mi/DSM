@@ -9,7 +9,14 @@
   ],
   "scripts": {
     "dev:backend": "npm --workspace backend run dev",
+    "dev:server": "npm --workspace backend run dev",
+    "dev:client": "npm --workspace admin-web-dashboard run dev",
+    "dev:admin": "npm --workspace admin-web-dashboard run dev",
+    "dev:app": "npm --workspace driver-mobile-app run start",
     "dev:driver": "npm --workspace driver-mobile-app run start",
-    "dev:admin": "npm --workspace admin-web-dashboard run dev"
+    "build:backend": "npm --workspace backend run build",
+    "build:client": "npm --workspace admin-web-dashboard run build",
+    "seed": "npm --workspace backend run seed",
+    "install:all": "npm install --workspaces"
   }
 }
