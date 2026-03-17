@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, ScrollView } from 'react-native';
 import ScreenContainer from '../components/layout/ScreenContainer';
 import { useAuth } from '../context/AuthContext';
 import { listDocumentsApi, submitApplicationApi, uploadDocumentApi } from '../services/driver.api';
@@ -19,6 +19,7 @@ const requiredDocs: { key: DocType; label: string }[] = [
 
 const DocumentUploadScreen = ({ navigation }: Props) => {
   const { state, refreshDriver } = useAuth();
+  const alreadySubmitted = (state.driverProfile?.onboardingStep ?? 0) >= 3;
   const [uploadedTypes, setUploadedTypes] = useState<DocType[]>([]);
   const [submitting, setSubmitting] = useState(false);
 
@@ -59,7 +60,12 @@ const DocumentUploadScreen = ({ navigation }: Props) => {
       setSubmitting(true);
       await submitApplicationApi(state.token);
       await refreshDriver();
-      navigation.navigate('PendingApproval');
+      // If editing after already submitted, go back to pending approval. Otherwise continue onboarding.
+      if (alreadySubmitted) {
+        navigation.navigate('PendingApproval');
+      } else {
+        navigation.navigate('PendingApproval');
+      }
     } catch (e: any) {
       Alert.alert('Submission failed', e?.response?.data?.message || 'Please try again.');
     } finally {
@@ -69,8 +75,14 @@ const DocumentUploadScreen = ({ navigation }: Props) => {
 
   return (
     <ScreenContainer>
-      <Text style={styles.stepLabel}>Step 2 of 3</Text>
-      <Text style={styles.title}>Upload your documents</Text>
+      <ScrollView showsVerticalScrollIndicator={false}>
+      {alreadySubmitted && (
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.navigate('PendingApproval')}>
+          <Text style={styles.backText}>← Back to application status</Text>
+        </TouchableOpacity>
+      )}
+      <Text style={styles.stepLabel}>{alreadySubmitted ? 'Edit documents' : 'Step 2 of 3'}</Text>
+      <Text style={styles.title}>{alreadySubmitted ? 'Replace your documents' : 'Upload your documents'}</Text>
       {requiredDocs.map((doc) => {
         const uploaded = uploadedTypes.includes(doc.key);
         return (
@@ -93,14 +105,25 @@ const DocumentUploadScreen = ({ navigation }: Props) => {
         disabled={!allRequiredUploaded || submitting}
       >
         <Text style={styles.primaryText}>
-          {submitting ? 'Submitting...' : 'Submit application for review'}
+          {submitting ? 'Submitting...' : alreadySubmitted ? 'Save & resubmit' : 'Submit application for review'}
         </Text>
       </TouchableOpacity>
+      </ScrollView>
     </ScreenContainer>
   );
 };
 
 const styles = StyleSheet.create({
+  backButton: {
+    marginBottom: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  backText: {
+    fontSize: 16,
+    color: '#374151',
+    fontWeight: '600',
+  },
   stepLabel: {
     fontSize: 13,
     color: '#6b7280',

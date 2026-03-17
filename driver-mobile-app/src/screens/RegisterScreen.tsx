@@ -2,14 +2,13 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import ScreenContainer from '../components/layout/ScreenContainer';
 import InputField from '../components/forms/InputField';
-import { useAuth } from '../context/AuthContext';
+import { registerApi } from '../services/auth.api';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../navigation/AuthStack';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'Register'>;
 
 const RegisterScreen = ({ navigation }: Props) => {
-  const { register } = useAuth();
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
@@ -19,7 +18,10 @@ const RegisterScreen = ({ navigation }: Props) => {
   const onSubmit = async () => {
     try {
       setLoading(true);
-      await register(name, phone, email, password);
+      await registerApi(name, phone, email, password);
+      Alert.alert('Registration successful', 'Your account has been created. Please log in to continue.', [
+        { text: 'Log in', onPress: () => navigation.navigate('Login') },
+      ]);
     } catch (e: any) {
       Alert.alert('Registration failed', e?.response?.data?.message || 'Please try again.');
     } finally {

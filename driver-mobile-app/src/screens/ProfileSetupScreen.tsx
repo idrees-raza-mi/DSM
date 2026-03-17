@@ -20,6 +20,8 @@ const ProfileSetupScreen = ({ navigation }: Props) => {
   const [iban, setIban] = useState('');
   const [loading, setLoading] = useState(false);
 
+  const alreadySubmitted = (state.driverProfile?.onboardingStep ?? 0) >= 3;
+
   const onContinue = async () => {
     if (!state.token) return;
     try {
@@ -32,7 +34,12 @@ const ProfileSetupScreen = ({ navigation }: Props) => {
         bankDetails: { bankName, accountName, iban },
       });
       await refreshDriver();
-      navigation.navigate('DocumentUpload');
+      // If editing after submission, go back to pending approval. Otherwise continue onboarding.
+      if (alreadySubmitted) {
+        navigation.navigate('PendingApproval');
+      } else {
+        navigation.navigate('DocumentUpload');
+      }
     } catch (e: any) {
       Alert.alert('Profile update failed', e?.response?.data?.message || 'Please try again.');
     } finally {
@@ -43,8 +50,13 @@ const ProfileSetupScreen = ({ navigation }: Props) => {
   return (
     <ScreenContainer>
       <ScrollView showsVerticalScrollIndicator={false}>
-        <Text style={styles.stepLabel}>Step 1 of 3</Text>
-        <Text style={styles.title}>Complete your profile</Text>
+        {alreadySubmitted && (
+          <TouchableOpacity onPress={() => navigation.navigate('PendingApproval')} style={{ marginBottom: 16, flexDirection: 'row', alignItems: 'center' }}>
+            <Text style={{ fontSize: 16, color: '#374151', fontWeight: '600' }}>← Back to application status</Text>
+          </TouchableOpacity>
+        )}
+        <Text style={styles.stepLabel}>{alreadySubmitted ? 'Edit profile' : 'Step 1 of 3'}</Text>
+        <Text style={styles.title}>{alreadySubmitted ? 'Update your details' : 'Complete your profile'}</Text>
         <InputField label="Full name" value={fullName} onChangeText={setFullName} />
         <InputField label="Phone" value={phone} onChangeText={setPhone} keyboardType="phone-pad" />
         <InputField label="Email" value={email} onChangeText={setEmail} keyboardType="email-address" />
@@ -54,7 +66,7 @@ const ProfileSetupScreen = ({ navigation }: Props) => {
         <InputField label="Account holder" value={accountName} onChangeText={setAccountName} />
         <InputField label="IBAN" value={iban} onChangeText={setIban} autoCapitalize="characters" />
         <TouchableOpacity style={styles.primaryButton} onPress={onContinue} disabled={loading}>
-          <Text style={styles.primaryText}>{loading ? 'Saving...' : 'Save & continue'}</Text>
+          <Text style={styles.primaryText}>{loading ? 'Saving...' : alreadySubmitted ? 'Save changes' : 'Save & continue'}</Text>
         </TouchableOpacity>
       </ScrollView>
     </ScreenContainer>

@@ -1,5 +1,6 @@
 import React, { ReactNode } from 'react';
-import { SafeAreaView, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 type Props = {
   children: ReactNode;
@@ -7,7 +8,7 @@ type Props = {
 
 const ScreenContainer = ({ children }: Props) => {
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={styles.safe} edges={['top', 'bottom', 'left', 'right']}>
       <View style={styles.container}>{children}</View>
     </SafeAreaView>
   );
