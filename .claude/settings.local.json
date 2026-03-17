@@ -4,7 +4,11 @@
       "Bash(npm install:*)",
       "Bash(npx tsc:*)",
       "Bash(npx vite:*)",
-      "Bash(npm ls:*)"
+      "Bash(npm ls:*)",
+      "Bash(xargs cat:*)",
+      "Bash(ipconfig:*)",
+      "Bash(npm:*)",
+      "Bash(npx expo:*)"
     ]
   }
 }

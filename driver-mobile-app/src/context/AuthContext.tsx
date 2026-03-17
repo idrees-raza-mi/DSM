@@ -19,6 +19,7 @@ type AuthState = {
 type AuthAction =
   | { type: 'LOGIN_START' }
   | { type: 'LOGIN_SUCCESS'; payload: { token: string; user: any; driverProfile: DriverProfile | null } }
+  | { type: 'LOGIN_ERROR' }
   | { type: 'LOGOUT' }
   | { type: 'UPDATE_DRIVER_PROFILE'; payload: DriverProfile };
 
@@ -41,6 +42,8 @@ function reducer(state: AuthState, action: AuthAction): AuthState {
         user: action.payload.user,
         driverProfile: action.payload.driverProfile,
       };
+    case 'LOGIN_ERROR':
+      return { ...state, loading: false };
     case 'LOGOUT':
       return initialState;
     case 'UPDATE_DRIVER_PROFILE':
@@ -65,40 +68,50 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const login = async (emailOrPhone: string, password: string) => {
     dispatch({ type: 'LOGIN_START' });
-    const res = await loginApi(emailOrPhone, password);
-    const d = res.data.data;
-    dispatch({
-      type: 'LOGIN_SUCCESS',
-      payload: {
-        token: d.token,
-        user: d.user,
-        driverProfile: d.driverProfile || {
-          id: d.user.id,
-          status: d.user.status,
-          onboardingStep: d.user.onboardingStep,
-          currentScore: d.user.currentScore,
+    try {
+      const res = await loginApi(emailOrPhone, password);
+      const d = res.data.data;
+      dispatch({
+        type: 'LOGIN_SUCCESS',
+        payload: {
+          token: d.token,
+          user: d.user,
+          driverProfile: d.driverProfile || {
+            id: d.user.id,
+            status: d.user.status,
+            onboardingStep: d.user.onboardingStep,
+            currentScore: d.user.currentScore,
+          },
         },
-      },
-    });
+      });
+    } catch (err) {
+      dispatch({ type: 'LOGIN_ERROR' });
+      throw err;
+    }
   };
 
   const register = async (name: string, phone: string, email: string, password: string) => {
     dispatch({ type: 'LOGIN_START' });
-    const res = await registerApi(name, phone, email, password);
-    const d = res.data.data;
-    dispatch({
-      type: 'LOGIN_SUCCESS',
-      payload: {
-        token: d.token,
-        user: d.user,
-        driverProfile: d.driverProfile || {
-          id: d.user.id,
-          status: d.user.status,
-          onboardingStep: d.user.onboardingStep,
-          currentScore: d.user.currentScore,
+    try {
+      const res = await registerApi(name, phone, email, password);
+      const d = res.data.data;
+      dispatch({
+        type: 'LOGIN_SUCCESS',
+        payload: {
+          token: d.token,
+          user: d.user,
+          driverProfile: d.driverProfile || {
+            id: d.user.id,
+            status: d.user.status,
+            onboardingStep: d.user.onboardingStep,
+            currentScore: d.user.currentScore,
+          },
         },
-      },
-    });
+      });
+    } catch (err) {
+      dispatch({ type: 'LOGIN_ERROR' });
+      throw err;
+    }
   };
 
   const refreshDriver = async () => {
